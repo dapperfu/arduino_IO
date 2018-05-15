@@ -1,6 +1,8 @@
 .env-*
 .ipynb_checkpoints
 
+**/build-*
+
 ## GitHub Ignores
 # Prerequisites
 *.d
