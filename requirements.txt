@@ -3,3 +3,7 @@ notebook
 nbconvert
 pyserial
 python-can
+
+numpy
+matplotlib
+seaborn
