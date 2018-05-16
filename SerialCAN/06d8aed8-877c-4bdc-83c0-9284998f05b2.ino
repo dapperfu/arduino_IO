@@ -1,84 +1,70 @@
 
-unsigned long BAUD = 115200;
-unsigned long DELAY = 1000;
-char BUILD_UUID[] = "06d8aed8-877c-4bdc-83c0-9284998f05b2";
+unsigned long BAUD __attribute__((section("CFG_BAUD"))) = 115200;
+unsigned long DELAY __attribute__((section("CFG_DELAY"))) = 1000;
+char BUILD_UUID[] __attribute__((section("CFG_UUID"))) =
+    "06d8aed8-877c-4bdc-83c0-9284998f05b2";
 
-char ARBITRATION_ID = 0x0;
-unsigned long time = 0b0;
-unsigned char counter = 0;
+unsigned long arbitration_id = 0x0;
+unsigned long time_millis = 0b0;
+unsigned long timestamp = 0x0;
+
+uint8_t counter8 = 0x00;
+uint16_t counter16 = 0x0000;
+uint32_t counter32 = 0x00000000;
 
 // Arduino Setup
 void setup() {
   Serial.begin(BAUD);
   Serial.print("Build UUID: ");
   Serial.println(BUILD_UUID);
-    // Start of frame
+
+  // Start of frame
   Serial.write(0xAA);
-// Timestamp
+
+  // Timestamp
   Serial.write(0x00);
   Serial.write(0x00);
   Serial.write(0x00);
   Serial.write(0x00);
-// DLC
+
+  // DLC
   Serial.write(0x00);
-// Arbitration ID
+
+  // Arbitration ID
   Serial.write(0x00);
   Serial.write(0x00);
   Serial.write(0x00);
-  Serial.write(0xFF);
-// End of frame
+  Serial.write(0x00);
+
+  // End of frame
   Serial.write(0xBB);
-  return; 
+  return;
 }
 
 // Arduino Main Loop
 void loop() {
-   time = millis();
-// Start of frame
+  time_millis = millis();
+  // Start of frame
   Serial.write(0xAA);
-// Timestamp
-for(char shift=0;shift<32;shift+=8) {
-  Serial.write((unsigned long)time>>shift&0b11111111);
-}
-// DLC
+
+  // Timestamp
+  timestamp = time_millis / 10;
+  for (char shift = 0; shift < 32; shift += 8) {
+    Serial.write((char)(((unsigned long)timestamp >> shift) & 0b11111111));
+  }
+
+  // DLC
   Serial.write(0x04);
-// Arbitration ID
-ARBITRATION_ID=0xFF;
-for(char shift=0;shift<32;shift+=8) {
-  Serial.write(((unsigned long)ARBITRATION_ID>>shift)&0b11111111);
-}
-// Payload
 
-for(char shift=0;shift<32;shift+=8) {
-  Serial.write((unsigned long)time>>shift&0b11111111);
-}
+  // Arbitration ID
+  arbitration_id = 1;
+  for (char shift = 0; shift < 32; shift += 8) {
+    Serial.write((char)(((unsigned long)arbitration_id >> shift) & 0xFF));
+  }
+
+  // Payload
+  for (char shift = 0; shift < 32; shift += 8) {
+    Serial.write((unsigned long)time_millis >> shift & 0b11111111);
+  }
   Serial.write(0xBB);
-  
-  
-   time = millis();
-// Start of frame
-  Serial.write(0xAA);
-// Timestamp
-for(char shift=0;shift<32;shift+=8) {
-  Serial.write((unsigned long)time>>shift&0b11111111);
-}
-// DLC
-  Serial.write(0x04);
-// Arbitration ID
-ARBITRATION_ID=0xEE;
-for(char shift=0;shift<32;shift+=8) {
-  Serial.write(((unsigned long)ARBITRATION_ID>>shift)&0b11111111);
-}
-// Payload
-
-uint16_t sine_value = (float)(pow(2,15)*(sin((float)time)+1));
-
-for(char shift=0;shift<32;shift+=8) {
-  Serial.write((unsigned long)sine_value>>shift&0b11111111);
-}
-  Serial.write(0xBB);
-  
-  delay(DELAY);
-  
-  return;
 }
